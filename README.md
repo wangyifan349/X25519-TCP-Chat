@@ -99,9 +99,11 @@ Shared secret (hex) -> 4e9a…c2d1
 Released under the MIT License.  See `LICENSE` for details.
 
 ---
-## :handshake:  Contributing
-Pull requests, bug reports, and feature suggestions are welcome!  Feel free to open an issue or create a PR.
----
+## 📝  License
+MIT – see the `LICENSE` file.  
 
-## :mailbox_with_mail:  Contact
-For questions or ideas, please open an issue in the repository.
+If this project saved you time, consider a small tip:
+
+**Bitcoin (SegWit) address:** 
+
+Thanks for your support!
