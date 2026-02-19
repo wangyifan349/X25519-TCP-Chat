@@ -1,119 +1,107 @@
 # X25519-TCP-Chat
 
-A simple and educational TCP communication tool that demonstrates how to use the X25519 elliptic curve key exchange and AES-GCM encryption to create a secure communication channel. This project is designed for learning purposes and demonstrates basic concepts such as secure key exchange, encryption, and multithreading in a client-server application. 🔐
+A small, educational TCP chat that demonstrates how to combine the X25519 Elliptic-Curve Diffie-Hellman (ECDH) key exchange with AES-GCM encryption to build a confidential and authenticated channel.  
+The code is intentionally minimal: it shows the basic ideas of secure key exchange, symmetric encryption, and multi-threaded I/O in a classic client / server design. :lock:
 
-## 🚀 Features
-- **X25519 Key Exchange**: Securely exchange a shared secret key between client and server using elliptic curve cryptography (ECC).
-- **AES-GCM Encryption**: Secure communication with AES-GCM encryption for both confidentiality and integrity. 🔒
-- **TCP Communication**: Implementing real-time message exchange over TCP. 🌐
-- **Multithreading**: Both sending and receiving messages operate in separate threads for non-blocking communication. 💬
+---
 
-## 📜 How It Works
+## :rocket:  Features
+- **X25519 Key Exchange** – A modern ECDH curve that lets the client and server derive the same 32-byte secret without ever sending that secret across the network.  
+- **AES-256-GCM Encryption** – Provides confidentiality and integrity for every message.  
+- **Pure TCP Transport** – Text messages are sent over a regular TCP socket.  
+- **Multithreaded I/O** – A sender thread and a receiver thread run in parallel so neither side blocks the other.  
 
-### 1. **X25519 Key Exchange**
-- The core of the security in this project is the **X25519 elliptic curve Diffie-Hellman (ECDH)** key exchange algorithm.
-- This algorithm allows the client and server to each generate a public and private key pair.
-- The client sends its public key to the server, and the server sends its public key to the client.
-- Using the private key of one party and the public key of the other party, both the client and the server can compute the same shared secret key without directly exchanging the secret itself.
-- This shared secret will later be used to derive symmetric encryption keys for encrypting messages.
+---
 
-### 2. **AES-GCM Encryption**
-- Once the shared secret is established, it is used to derive a **symmetric key** using a key derivation function (KDF). This symmetric key is then used for **AES (Advanced Encryption Standard)** encryption and decryption.
-- AES is a symmetric encryption algorithm, meaning the same key is used for both encryption and decryption.
-- In this project, AES is used in **GCM mode (Galois/Counter Mode)**, which not only encrypts the message but also provides authentication through a message authentication code (MAC). This ensures both the confidentiality and integrity of the transmitted data.
-- AES-GCM requires a **nonce** (a unique number used once) for each message. This nonce is generated randomly for each message and is used to ensure that identical plaintexts produce different ciphertexts, even if encrypted with the same key.
+## :books:  How It Works
 
-### 3. **Message Transmission**
-- The client and server send encrypted messages over a **TCP** connection.
-- The messages are encrypted using AES-GCM before being transmitted and decrypted by the receiving party after they are received.
+1. **Key Exchange**  
+   Each side creates an X25519 key pair.  
+   After exchanging raw 32-byte public keys, both sides call `private_key.exchange(peer_public)` to compute the same 32-byte shared secret.
 
-### 4. **Multithreading for Communication**
-- To prevent blocking (e.g., waiting for user input while also receiving messages), both the **sending** and **receiving** operations run in separate threads.
-- This allows the client and server to send and receive messages continuously, without one operation blocking the other.
+2. **Key Derivation**  
+   The shared secret is fed into HKDF-SHA256 to derive a 256-bit AES key that will encrypt all traffic.
 
-## ⚠️ **Important Disclaimer**
-This program is designed **solely for educational purposes**. It **is not** a fully-secure or production-ready implementation of secure communication. The code demonstrates fundamental concepts of:
-- **X25519 Key Exchange**
-- **AES-GCM Encryption**
-- **TCP Communication**
-- **Multithreading**
+3. **Encryption**  
+   For every outbound message a fresh 12-byte nonce is generated.  
+   The packet layout is  
+   ```
+   4-byte length | 12-byte nonce | 16-byte GCM tag | ciphertext
+   ```  
+   The receiver uses the length prefix to read the full packet and then decrypts it with the same AES key.
 
-It is **not suitable for use in production environments** as it lacks many important security features such as:
-- **Message Authentication** (e.g., HMAC for integrity)
-- **Secure key management**
-- **Proper handling of errors and exceptions**
-- **Defense against potential attacks (e.g., man-in-the-middle, replay attacks)**
+4. **Multithreading**  
+   • Main thread: reads user input and sends encrypted packets.  
+   • Background thread: blocks on `recv()` and prints decrypted messages.
 
-This project is meant to **teach** how to set up a basic secure communication system using X25519 and AES-GCM, but **should not be used for real-world applications** without significant improvements and security enhancements.
+---
 
-## 🛠️ Requirements
-- Python 3.x
-- `cryptography` library
+## :warning:  Disclaimer
 
-You can install the required Python libraries using:
+This repository is **for learning only**.  It is **not production ready** and deliberately omits:
+
+- certificate or public-key authentication (susceptible to MITM)
+- replay protection
+- proper error handling and logging
+- key rotation / forward secrecy beyond a single run
+
+Do **not** rely on it for sensitive data in the real world.
+
+---
+
+## :hammer:  Requirements
+* Python 3.8+  
+* `cryptography` (`pip install cryptography`)
+
+---
+
+## :gear:  Usage
+
+### 1. Clone
 ```bash
-pip install cryptography
-````
-
-## ⚙️ Usage
-
-### Server
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/wangyifan349/X25519-TCP-Chat.git
-   cd X25519-TCP-Chat
-   ```
-2. Run the server:
-
-   ```bash
-   python server.py
-   ```
-
-   The server will start and wait for the client to connect.
-
-### Client
-
-1. Clone the repository:
-
-   ```bash
-   git clone https://github.com/wangyifan349/X25519-TCP-Chat.git
-   cd X25519-TCP-Chat
-   ```
-2. Run the client:
-
-   ```bash
-   python client.py
-   ```
-
-   The client will connect to the server and allow you to send and receive messages.
-
-## 💡 Example
-
-### Server Output:
-
-```bash
-服务器启动，等待连接...
-客户端 ('127.0.0.1', 12345) 已连接
-[接收线程] 接收到的消息: b'Hello from client!'
+git clone https://github.com/your-name/X25519-TCP-Chat.git
+cd X25519-TCP-Chat
 ```
 
-### Client Output:
-
+### 2. Start the server
 ```bash
-请输入消息：Hello from client!
-[接收线程] 服务器回复: Hello from server!
+python server.py
+```
+The server listens on `127.0.0.1:12345` and waits for a client.
+
+### 3. Start the client (new terminal)
+```bash
+python client.py
 ```
 
-## 📃 License
+Type messages in either window; they will appear decrypted on the opposite side.
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+---
 
-## 💬 Contributing
+## :computer:  Example
 
-Feel free to fork the repository, submit issues, and send pull requests. All contributions are welcome!
+**Server**
+```
+Server listening on 127.0.0.1:12345
+Client connected -> ('127.0.0.1', 60836)
+Shared secret (hex) -> 4e9a…c2d1
+[client] hello!
+```
 
-## 📧 Contact
+**Client**
+```
+Shared secret (hex) -> 4e9a…c2d1
+> hello!
+[server] got it!
+```
+---
+## :memo:  License
+Released under the MIT License.  See `LICENSE` for details.
 
-If you have any questions or suggestions, feel free to open an issue on GitHub.
+---
+## :handshake:  Contributing
+Pull requests, bug reports, and feature suggestions are welcome!  Feel free to open an issue or create a PR.
+---
+
+## :mailbox_with_mail:  Contact
+For questions or ideas, please open an issue in the repository.
