@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.backends import default_backend
-SERVER_HOST = '127.0.0.1'                           # bind address
+SERVER_HOST = '0.0.0.0'                           # bind address
 SERVER_PORT = 12345                                 # bind port
 # ---------- helpers: encrypt / decrypt ----------
 def send_encrypted(sock: socket.socket, aes_key: bytes, plaintext: bytes) -> None:
