@@ -19,7 +19,13 @@ A simple and educational TCP communication tool that demonstrates how to use the
 ### 2. **AES Encryption**
 - Once the shared secret is established, it is used to derive a **symmetric key** using a key derivation function (KDF). This symmetric key is then used for **AES (Advanced Encryption Standard)** encryption and decryption.
 - AES is a symmetric encryption algorithm, meaning the same key is used for both encryption and decryption.
-- In this project, AES is used in **CBC mode (Cipher Block Chaining)**, which requires an initialization vector (IV) for each message to ensure that identical plaintexts produce different ciphertexts. This IV is generated randomly for each message.
+### 2. **AES Encryption**
+- Once the shared secret is established, it is used to derive a **symmetric key** using a key derivation function (KDF). This symmetric key is then used for **AES (Advanced Encryption Standard)** encryption and decryption.
+- AES is a symmetric encryption algorithm, meaning the same key is used for both encryption and decryption.
+- In this project, AES is used in **GCM mode (Galois/Counter Mode)**, which not only encrypts the message but also provides authentication through a message authentication code (MAC). This ensures both the confidentiality and integrity of the transmitted data.
+- AES-GCM requires a **nonce** (a unique number used once) for each message. This nonce is generated randomly for each message and is used to ensure that identical plaintexts produce different ciphertexts, even if encrypted with the same key.
+
+
 
 ### 3. **Message Transmission**
 - The client and server send encrypted messages over a **TCP** connection.
