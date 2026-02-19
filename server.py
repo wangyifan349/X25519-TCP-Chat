@@ -6,38 +6,37 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import ciphers
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
-# 生成 X25519 私钥
+# Generate X25519 private and public keys
 private_key = X25519PrivateKey.generate()
 public_key = private_key.public_key()
 
-# 服务器配置
-HOST = '127.0.0.1'  # 本地地址
-PORT = 12345  # 端口
+# Server configuration
+HOST = '127.0.0.1'  # Localhost
+PORT = 12345  # Port
 
-# 创建 TCP 套接字
+# Create TCP socket
 server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_socket.bind((HOST, PORT))
 server_socket.listen(1)
 
-print(f"服务器启动，等待连接...")
+print("Server started, waiting for connection...")
 
-# 等待客户端连接
+# Wait for client connection
 conn, addr = server_socket.accept()
-print(f"客户端 {addr} 已连接")
-
-# 发送服务器公钥给客户端
+print(f"Client {addr} connected")
+# Send server's public key to the client
 conn.send(public_key.public_bytes())
-
-# 接收客户端的公钥
+# Receive client's public key
 client_public_key_bytes = conn.recv(1024)
 client_public_key = X25519PublicKey.from_public_bytes(client_public_key_bytes)
-
-# 使用双方的私钥和公钥计算共享密钥
+# Compute shared secret using both private and public keys
 shared_key = private_key.exchange(client_public_key)
-
-# 通过密钥派生出对称加密密钥
-salt = os.urandom(16)  # 盐值
+# Derive symmetric encryption key from shared secret using PBKDF2
+salt = os.urandom(16)
 kdf = PBKDF2HMAC(
     algorithm=hashes.SHA256(),
     length=32,
@@ -45,33 +44,29 @@ kdf = PBKDF2HMAC(
     iterations=100000,
     backend=default_backend()
 )
-
-# 使用 KDF 从共享密钥派生对称密钥
 key = kdf.derive(shared_key)
-
-# 创建加密上下文
-cipher = ciphers.Cipher(ciphers.algorithms.AES(key), ciphers.modes.CBC(os.urandom(16)), backend=default_backend())
-
-# 处理消息的循环
+# Create AES-GCM cipher object for encryption
+nonce = os.urandom(12)  # AES-GCM requires a nonce (12 bytes)
+cipher = ciphers.Cipher(ciphers.algorithms.AES(key), ciphers.modes.GCM(nonce), backend=default_backend())
+# Handle the reception and encryption of messages
 def receive_message():
     while True:
         data = conn.recv(1024)
         if not data:
-            print("客户端已断开连接")
+            print("Client disconnected")
             break
-        print(f"[接收线程] 接收到的消息: {data}")
-        
-        # 加密消息
+        print(f"[Receive Thread] Received message: {data}")
+        # Encrypt the message using AES-GCM
         encryptor = cipher.encryptor()
         encrypted_message = encryptor.update(data) + encryptor.finalize()
-        conn.send(encrypted_message)
+        tag = encryptor.tag  # Message Authentication Code (MAC)
+        # Send encrypted message and tag to the client
+        conn.send(encrypted_message + tag)
 
-# 创建并启动接收消息线程
+# Create and start the receive message thread
 receive_thread = threading.Thread(target=receive_message, name="Receive-Thread")
 receive_thread.start()
-
-# 主线程继续处理其他任务，保持服务器运行
+# Wait for the receive thread to complete
 receive_thread.join()
-
-# 关闭连接
+# Close the connection
 conn.close()
