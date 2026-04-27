@@ -4,7 +4,6 @@ This is a command-line secure TCP communication tool. It supports plain text cha
 Protocol overview: the client and server perform one handshake on the message channel and another handshake on the file channel. During each handshake, both sides exchange MAGIC, channel name, ephemeral X25519 public key, and a random nonce in plaintext. Both sides then compute the X25519 shared_secret, use the SHA-256 hash of the handshake transcript as the PBKDF2-SHA256 salt, derive a master_key with iterations, and expand it into separate client-to-server and server-to-client ChaCha20-Poly1305 keys plus nonce prefixes. After the handshake, every application frame is packed as `1-byte frame type + 4-byte plaintext length + plaintext payload`, encrypted as a whole, and sent as `4-byte ciphertext length + ChaCha20-Poly1305 ciphertext`. The message channel carries only text frames. The file channel carries FILE_META, FILE_CHUNK, and FILE_END frames; the receiver maintains multiple .part files by file_id and renames a file to its final name only after size and SHA-256 verification succeeds.
 Security note: this study/debug version detects man-in-the-middle attacks by asking both users to compare the printed overall session verification code through a trusted channel. If the values differ, exit immediately. For learning purposes, this version prints very sensitive handshake material, including the X25519 private key, raw shared_secret, master key, and traffic keys. Do not use this verbose debug output in production or in any environment where logs may be exposed.
 """
-
 import os
 import sys
 import json
@@ -226,8 +225,6 @@ class SecureChannel:
         if len(payload) != payload_len:
             raise ValueError("decrypted frame length mismatch")
         return frame_type, payload
-
-
 # Sender state for a file that may be interleaved with other active file transfers.
 @dataclass
 class SendFileTask:
@@ -548,8 +545,6 @@ class ChatApp:
             pass
         finally:
             self.close()
-
-
 # Server opens two listening sockets: one for chat, one for files.
 def run_server(host=DEFAULT_HOST, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_FILE_PORT):
     msg_listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   # Server listener for message channel.
@@ -583,21 +578,16 @@ def run_server(host=DEFAULT_HOST, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_F
 def run_client(host: str, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_FILE_PORT):
     msg_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)       # Client socket for message channel.
     file_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)      # Client socket for file channel.
-
     msg_sock.connect((host, msg_port))
     file_sock.connect((host, file_port))
-
     print(f"[connected to server] {host}")
     print(f"[message port] {msg_port}")
     print(f"[file port] {file_port}")
-
     app = ChatApp(
         SecureChannel(msg_sock, "client", "msg"),
         SecureChannel(file_sock, "client", "file"),
     )
     app.start()
-
-
 # Command-line entry point. No arguments means default server mode.
 def main():
     if len(sys.argv) == 1:
@@ -606,36 +596,28 @@ def main():
         print(f"[default file port] {DEFAULT_FILE_PORT}")
         run_server(msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_FILE_PORT)
         return
-
     mode = sys.argv[1].lower()
-
     if mode == "server":
         msg_port = int(sys.argv[2]) if len(sys.argv) >= 3 else DEFAULT_MSG_PORT
         file_port = int(sys.argv[3]) if len(sys.argv) >= 4 else msg_port + 1
         run_server(msg_port=msg_port, file_port=file_port)
-
     elif mode == "client":
         if len(sys.argv) < 3:
             print("client mode requires a server address")
             print(f"example: python {os.path.basename(__file__)} client {DEFAULT_CLIENT_HOST} {DEFAULT_MSG_PORT} {DEFAULT_FILE_PORT}")
             return
-
         host = sys.argv[2]
         msg_port = int(sys.argv[3]) if len(sys.argv) >= 4 else DEFAULT_MSG_PORT
         file_port = int(sys.argv[4]) if len(sys.argv) >= 5 else msg_port + 1
         run_client(host, msg_port, file_port)
-
     elif mode in ("-h", "--help", "help"):
         print("usage:")
         print(f"  default server: python {os.path.basename(__file__)}")
         print(f"  server:         python {os.path.basename(__file__)} server [msg_port] [file_port]")
         print(f"  client:         python {os.path.basename(__file__)} client <host> [msg_port] [file_port]")
         print(f"default ports: message {DEFAULT_MSG_PORT}, file {DEFAULT_FILE_PORT}")
-
     else:
         print("invalid mode; use server or client")
         print(f"show help: python {os.path.basename(__file__)} --help")
-
-
 if __name__ == "__main__":
     main()
