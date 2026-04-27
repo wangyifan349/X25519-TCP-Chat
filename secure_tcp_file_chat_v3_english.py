@@ -1,14 +1,10 @@
 #!/usr/bin/env python3
 """
 secure_tcp_file_chat_v3_english.py
-
 This is a command-line secure TCP communication tool. It supports plain text chat messages, concurrent sending of multiple large files, concurrent receiving of multiple large files, SHA-256 integrity verification after each file is received, and automatic storage in the default received_files directory. The program uses two TCP connections: the message channel is used for low-latency text communication, while the file channel is used for file metadata, file chunks, and file completion information. Sending and receiving run in separate threads, so large file transfers do not block normal message traffic.
-
 Protocol overview: the client and server perform one handshake on the message channel and another handshake on the file channel. During each handshake, both sides exchange MAGIC, channel name, ephemeral X25519 public key, and a random nonce in plaintext. Both sides then compute the X25519 shared_secret, use the SHA-256 hash of the handshake transcript as the PBKDF2-SHA256 salt, derive a master_key with iterations, and expand it into separate client-to-server and server-to-client ChaCha20-Poly1305 keys plus nonce prefixes. After the handshake, every application frame is packed as `1-byte frame type + 4-byte plaintext length + plaintext payload`, encrypted as a whole, and sent as `4-byte ciphertext length + ChaCha20-Poly1305 ciphertext`. The message channel carries only text frames. The file channel carries FILE_META, FILE_CHUNK, and FILE_END frames; the receiver maintains multiple .part files by file_id and renames a file to its final name only after size and SHA-256 verification succeeds.
-
 Security note: this program detects man-in-the-middle attacks by asking both users to compare the printed overall session verification code through a trusted channel. If the values differ, exit immediately. The program prints public keys, random nonces, transcript hashes, and derived key hashes, but it never prints the X25519 private key or the raw shared_secret.
 """
-
 import os
 import sys
 import json
@@ -211,21 +207,17 @@ class SecureChannel:
         print(f"server_nonce_prefix  = {nonce_s2c.hex()}")
         print(f"{self.name} channel verification code = {self.verify_code.hex()[:40]}")
         print(f"========== {self.name} channel handshake end ==========\n")
-
     def send_frame(self, frame_type: int, payload: bytes = b""):
         # Plaintext frame format: 1-byte frame_type + 4-byte payload length + payload.
         # The whole plaintext frame is then encrypted with AEAD; the network only sees ciphertext length and ciphertext.
         inner = struct.pack("!BI", frame_type, len(payload)) + payload
-
         with self.send_lock:
             nonce = self.send_nonce_prefix + self.send_seq.to_bytes(8, "big")
             self.send_seq += 1
             # AAD binds the protocol version and channel name to prevent cross-protocol or cross-channel ciphertext reuse.
             encrypted = self.send_aead.encrypt(nonce, inner, MAGIC + self.name_field)
-
             if len(encrypted) > MAX_FRAME_SIZE:
                 raise ValueError("encrypted frame is too large")
-
             self.sock.sendall(struct.pack("!I", len(encrypted)) + encrypted)
 
     def recv_frame(self):
@@ -326,7 +318,6 @@ class ChatApp:
                     text = self.msg_queue.get(timeout=0.2)
                 except queue.Empty:
                     continue
-
                 self.msg_channel.send_frame(MSG_TEXT, text.encode("utf-8"))
         except Exception as e:
             if self.running.is_set():
@@ -337,10 +328,8 @@ class ChatApp:
         try:
             while self.running.is_set():
                 frame_type, payload = self.msg_channel.recv_frame()
-
                 if frame_type != MSG_TEXT:
                     raise RuntimeError(f"message channel received an unknown frame: {frame_type}")
-
                 print(f"\n[received message] {payload.decode('utf-8', errors='replace')}")
         except Exception as e:
             if self.running.is_set():
@@ -366,9 +355,7 @@ class ChatApp:
             "size": task.size,
             "chunk_size": CHUNK_SIZE,
         }
-
         self.file_channel.send_frame(FILE_META, json.dumps(meta, ensure_ascii=False).encode("utf-8"))
-
         print(f"[start sending file] {task.name}")
         print(f"[file_id] {task.file_id}")
         print(f"[size] {task.size} bytes")
@@ -393,10 +380,8 @@ class ChatApp:
                     except queue.Empty:
                         continue
                     continue
-
                 for task in active[:]:
                     chunk = task.fp.read(CHUNK_SIZE)
-
                     if chunk:
                         task.sha256.update(chunk)
                         task.sent += len(chunk)
@@ -421,7 +406,6 @@ class ChatApp:
                         print(f"[file_id] {task.file_id}")
                         print(f"[SHA256] {task.sha256.hexdigest()}")
                         active.remove(task)
-
                 now = time.time()
                 if active and now - last_report >= 2:
                     for task in active:
@@ -447,11 +431,9 @@ class ChatApp:
         base, ext = os.path.splitext(name)
         path = os.path.join(RECV_DIR, name)
         index = 1
-
         while os.path.exists(path) or os.path.exists(path + ".part"):
             path = os.path.join(RECV_DIR, f"{base}_{index}{ext}")
             index += 1
-
         return path
 
     def file_recv_loop(self):
@@ -492,15 +474,12 @@ class ChatApp:
                     item["fp"].write(chunk)
                     item["sha256"].update(chunk)
                     item["received"] += len(chunk)
-
                 elif frame_type == FILE_END:
                     end_info = json.loads(payload.decode("utf-8"))
                     file_id = end_info["id"]
                     item = files.pop(file_id, None)
-
                     if not item:
                         raise RuntimeError(f"received an end frame for an unknown file: {file_id}")
-
                     item["fp"].close()
                     actual_hash = item["sha256"].hexdigest()
                     expected_hash = end_info["sha256"]
@@ -531,7 +510,6 @@ class ChatApp:
 
                 else:
                     raise RuntimeError(f"file channel received an unknown frame: {frame_type}")
-
         except Exception as e:
             if self.running.is_set():
                 print(f"[file receiver thread exited] {e}")
@@ -542,7 +520,6 @@ class ChatApp:
                     item["fp"].close()
                 with suppress(Exception):
                     os.remove(item["tmp_path"])
-
     def start(self):
         try:
             self.do_handshake()
@@ -588,11 +565,9 @@ def run_server(host=DEFAULT_HOST, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_F
     print("[waiting for message channel connection]")
     msg_sock, msg_addr = msg_listener.accept()
     print(f"[message channel connected] {msg_addr}")
-
     print("[waiting for file channel connection]")
     file_sock, file_addr = file_listener.accept()
     print(f"[file channel connected] {file_addr}")
-
     with suppress(Exception):
         msg_listener.close()
     with suppress(Exception):
@@ -608,14 +583,11 @@ def run_server(host=DEFAULT_HOST, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_F
 def run_client(host: str, msg_port=DEFAULT_MSG_PORT, file_port=DEFAULT_FILE_PORT):
     msg_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     file_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
     msg_sock.connect((host, msg_port))
     file_sock.connect((host, file_port))
-
     print(f"[connected to server] {host}")
     print(f"[message port] {msg_port}")
     print(f"[file port] {file_port}")
-
     app = ChatApp(
         SecureChannel(msg_sock, "client", "msg"),
         SecureChannel(file_sock, "client", "file"),
@@ -648,18 +620,14 @@ def main():
         msg_port = int(sys.argv[3]) if len(sys.argv) >= 4 else DEFAULT_MSG_PORT
         file_port = int(sys.argv[4]) if len(sys.argv) >= 5 else msg_port + 1
         run_client(host, msg_port, file_port)
-
     elif mode in ("-h", "--help", "help"):
         print("usage:")
         print(f"  default server: python {os.path.basename(__file__)}")
         print(f"  server:         python {os.path.basename(__file__)} server [msg_port] [file_port]")
         print(f"  client:         python {os.path.basename(__file__)} client <host> [msg_port] [file_port]")
         print(f"default ports: message {DEFAULT_MSG_PORT}, file {DEFAULT_FILE_PORT}")
-
     else:
         print("invalid mode; use server or client")
         print(f"show help: python {os.path.basename(__file__)} --help")
-
-
 if __name__ == "__main__":
     main()
