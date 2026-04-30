@@ -99,8 +99,6 @@ Shared secret (hex) -> 4e9a…c2d1
 Released under the GNU General Public License v3 .  See `LICENSE` for details.
 
 ---
-## 📝 License
-MIT – see the `LICENSE` file.
 
 If this project saved you some time or effort, consider buying me a coffee ☕
 
