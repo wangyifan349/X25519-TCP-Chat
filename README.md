@@ -96,14 +96,15 @@ Shared secret (hex) -> 4e9a…c2d1
 ```
 ---
 ## :memo:  License
-Released under the MIT License.  See `LICENSE` for details.
+Released under the GNU General Public License v3 .  See `LICENSE` for details.
 
 ---
-## 📝  License
-MIT – see the `LICENSE` file.  
+## 📝 License
+MIT – see the `LICENSE` file.
 
-If this project saved you time, consider a small tip:
+If this project saved you some time or effort, consider buying me a coffee ☕
 
-**Bitcoin (SegWit) address:** 
+**Bitcoin (SegWit) address:**  
+bc1qxqfhumpqtnxrznkx9r4xsp8m6zsedtgusjns7p
 
-Thanks for your support!
+Your support means a lot — thank you!
