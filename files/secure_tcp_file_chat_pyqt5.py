@@ -1039,14 +1039,10 @@ class MainWindow(QMainWindow):
     def closeEvent(self, event):
         self.disconnect()
         event.accept()
-
-
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
     window.showMaximized()  # Start maximized to reduce unused screen space.
     sys.exit(app.exec_())  # Enter the Qt event loop.
-
-
 if __name__ == "__main__":
     main()
