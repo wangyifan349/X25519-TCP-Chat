@@ -40,22 +40,13 @@ keys, shared secrets, master keys, nonce prefixes, and traffic keys. Do not use
 this debug logging in production or anywhere logs may be exposed.
 """
 """
-This project also comes from a personal and painful frustration. Secure
-communication is not only an abstract technical topic here. When a person feels
-targeted simply because of different values, when ordinary boundaries are
-ignored, and when following, pressure, or repeated message flooding becomes part
-of daily life, privacy stops being a luxury and becomes a necessity.
-
-That kind of pressure is difficult to explain to someone who has never
-experienced it. It can become exhausting, invasive, and unbearable. Without that
-repeated disturbance, the feeling of being targeted, and the sense that normal
-personal boundaries were no longer being respected, this GitHub repository
-would not have existed.
-
-For that reason, this project is not only a study of encryption,
-authentication, and secure file transfer. It is also an attempt to show why
-these tools matter when communication itself stops feeling peaceful, neutral, or
-safe.
+This project grew out of a deeply personal and painful experience: the feeling of being followed, watched, targeted, and repeatedly pressured.
+In this context, secure communication is not an abstract technical topic. It is about whether a person can still have basic private space; whether they can express themselves, protect themselves, and communicate with others normally without being monitored, disturbed, or intimidated.
+When someone is treated as “suspicious” or “disloyal” simply because they hold different values, different views, or refuse to conform to a particular narrative; when grand terms such as “patriotism,” “national security,” or “public interest” are used to justify intrusions into personal life; when governments, institutions, or any party with power can freely cross boundaries, inspect, track, pressure, and interfere with a person’s communications and daily life, privacy is no longer a luxury. It becomes a basic line of defense.
+The pain of being tracked is difficult to explain to those who have never experienced it. It is not a one-time violation, but a continuous form of exhaustion. It makes a person question every contact, every login, every message, and every unfamiliar interaction. Over time, it seeps into everyday life, making it impossible to truly relax or to believe that ordinary communication is safe, neutral, or harmless.
+This GitHub repository exists because of that feeling of being targeted, because personal boundaries are repeatedly broken, and because privacy is too easily sacrificed in the name of power, public opinion, or so-called “security.”
+It is also a response: when personal privacy is ignored, when freedom of communication is threatened, and when people are subjected to undue pressure simply because of different values, we need secure and reliable communication tools.
+What I want to express is this: protecting privacy is not about avoiding responsibility, nor is it about opposing society. Protecting privacy is about ensuring that every person can retain the most basic dignity, boundaries, and freedom when facing power, prejudice, harassment, and surveillance.
 """
 
 import os
