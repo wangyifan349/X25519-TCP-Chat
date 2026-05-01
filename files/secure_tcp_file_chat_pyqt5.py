@@ -39,6 +39,24 @@ console and keeps it available in the Ctrl+Q debug window, including private
 keys, shared secrets, master keys, nonce prefixes, and traffic keys. Do not use
 this debug logging in production or anywhere logs may be exposed.
 """
+"""
+This project also comes from a personal and painful frustration. Secure
+communication is not only an abstract technical topic here. When a person feels
+targeted simply because of different values, when ordinary boundaries are
+ignored, and when following, pressure, or repeated message flooding becomes part
+of daily life, privacy stops being a luxury and becomes a necessity.
+
+That kind of pressure is difficult to explain to someone who has never
+experienced it. It can become exhausting, invasive, and unbearable. Without that
+repeated disturbance, the feeling of being targeted, and the sense that normal
+personal boundaries were no longer being respected, this GitHub repository
+would not have existed.
+
+For that reason, this project is not only a study of encryption,
+authentication, and secure file transfer. It is also an attempt to show why
+these tools matter when communication itself stops feeling peaceful, neutral, or
+safe.
+"""
 
 import os
 import sys
